@@ -1,102 +1,107 @@
-# Scaler Persona Chatbot
+# Gen-AI Mentor Chat
 
-A persona-based AI chatbot featuring three Scaler Academy leaders: **Anshuman Singh**, **Abhimanyu Saxena**, and **Kshitij Mishra**. Built with Next.js, Tailwind CSS, and the Google Gemini API.
+A persona-based chatbot that lets you talk to three Scaler Academy mentors: **Anshuman Singh**, **Abhimanyu Saxena**, and **Kshitij Mishra**. The app uses Next.js, TypeScript, and Google Gemini, with each mentor carrying a different tone and focus.
 
-> **Live Demo**: _Add your deployed URL here after deploying to Vercel_
+## Highlights
 
-## Screenshots
-
-_Add screenshots of the chat interface (showing each persona) after running the app._
-
-## Features
-
-- Switch between three distinct personas via a tab-based switcher
-- Conversation history resets automatically when switching personas
-- Quick-start suggestion chips per persona
-- Typing indicator during API calls
-- Responsive design for mobile and desktop
-- Graceful error handling with user-friendly messages
+- Switch between mentors without mixing conversation history
+- Send the full thread to the backend for contextual replies
+- Use quick-start suggestions to jump into a topic faster
+- Handle loading, safety, and error states cleanly
+- Responsive on desktop and mobile
 
 ## Tech Stack
 
-- **Framework**: Next.js 14 (App Router)
-- **Styling**: Tailwind CSS
-- **AI**: Google Gemini API (`gemini-1.5-flash`)
+- **Framework**: Next.js
 - **Language**: TypeScript
+- **AI**: Google Gemini API
+- **Styling**: App-level CSS
 
-## Local Setup
+## Setup
 
-### 1. Clone the repository
-
-```bash
-git clone <your-repo-url>
-cd scaler-persona-chatbot
-```
-
-### 2. Install dependencies
+1. Install dependencies.
 
 ```bash
 npm install
 ```
 
-### 3. Configure environment variables
+2. Create your local environment file.
 
 ```bash
-cp .env.example .env.local
+copy .env.example .env.local
 ```
 
-Edit `.env.local` and add your Gemini API key:
+3. Add your Gemini API key.
 
-```
+```bash
 GEMINI_API_KEY=your_gemini_api_key_here
 ```
 
-Get your API key from [aistudio.google.com/app/apikey](https://aistudio.google.com/app/apikey).
-
-### 4. Run the development server
+4. Start the app.
 
 ```bash
 npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) in your browser.
+Open [http://localhost:3000](http://localhost:3000).
 
-## Deployment (Vercel)
+## What the API Needs
 
-1. Push this repository to GitHub.
-2. Go to [vercel.com](https://vercel.com) and import the repository.
-3. In the Vercel project settings, add the environment variable:
-   - `GEMINI_API_KEY` = your API key
+You do not need a separate public API. The backend route talks to Google Gemini directly and only needs one secret:
+
+- `GEMINI_API_KEY` in `.env.local`
+
+The chat endpoint is `POST /api/chat`, and it expects:
+
+```json
+{
+   "mentorId": "anshuman",
+   "messages": [
+      { "role": "user", "content": "Hi" },
+      { "role": "assistant", "content": "Hello" },
+      { "role": "user", "content": "How should I start learning product thinking?" }
+   ]
+}
+```
+
+The route returns:
+
+```json
+{ "message": "..." }
+```
+
+Behind the scenes, the app uses Gemini with mentor-specific system prompts, so the key thing you provide is the Gemini API key, not a custom model endpoint.
+
+## Deployment
+
+1. Push the repo to GitHub.
+2. Import it in Vercel.
+3. Add `GEMINI_API_KEY` in the Vercel environment settings.
 4. Deploy.
 
 ## Project Structure
 
 ```
 ├── app/
-│   ├── api/chat/route.ts     # Backend API route
+│   ├── api/chat/route.ts
+│   ├── globals.css
 │   ├── layout.tsx
 │   └── page.tsx
 ├── components/
-│   ├── ChatInterface.tsx     # Main chat component (state + logic)
-│   ├── PersonaSwitcher.tsx   # Tab switcher for personas
-│   ├── MessageBubble.tsx     # Individual chat message
-│   └── TypingIndicator.tsx   # Animated typing indicator
 ├── lib/
-│   └── personas.ts           # Persona definitions and system prompts
-├── prompts.md                # Annotated system prompt documentation
-├── reflection.md             # 300–500 word reflection
-└── .env.example              # Environment variable template
+├── prompts.md
+└── reflection.md
 ```
 
 ## Personas
 
-| Persona | Role | Focus |
-|---|---|---|
-| Anshuman Singh | CEO & Co-founder | Startup, education vision, outcomes |
-| Abhimanyu Saxena | Co-founder | DSA, system design, technical depth |
-| Kshitij Mishra | Instructor & Mentor | Teaching, algorithms, interview prep |
+| Mentor | Focus |
+|---|---|
+| Anshuman Singh | Startup thinking, education vision, outcomes |
+| Abhimanyu Saxena | DSA, system design, technical depth |
+| Kshitij Mishra | Teaching, algorithms, interview prep |
 
-## Documentation
+## More Docs
 
-- [`prompts.md`](./prompts.md) — Annotated system prompts with design rationale
-- [`reflection.md`](./reflection.md) — Reflection on prompt engineering effectiveness
+- [`prompts.md`](./prompts.md) for the prompt design notes
+- [`reflection.md`](./reflection.md) for the prompt engineering reflection
