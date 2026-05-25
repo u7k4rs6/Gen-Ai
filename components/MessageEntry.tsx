@@ -1,4 +1,5 @@
 import { Mentor } from "@/lib/mentors";
+import Avatar from "./Avatar";
 
 interface Interaction {
   role: "user" | "assistant";
@@ -10,33 +11,46 @@ interface Props {
   mentor: Mentor;
 }
 
+function renderMd(text: string) {
+  const parts = text.split(/(\*\*[^*]+\*\*|\*[^*]+\*)/g);
+  return parts.map((p, i) => {
+    if (/^\*\*[^*]+\*\*$/.test(p)) return <strong key={i}>{p.slice(2, -2)}</strong>;
+    if (/^\*[^*]+\*$/.test(p))     return <em key={i} style={{ color: "var(--text)" }}>{p.slice(1, -1)}</em>;
+    return <span key={i}>{p}</span>;
+  });
+}
+
 export default function MessageEntry({ interaction, mentor }: Props) {
   const isUser = interaction.role === "user";
 
   if (isUser) {
     return (
-      <div className="flex justify-end mb-6">
-        <div className="max-w-[85%] bg-blue-600 text-white rounded-3xl rounded-br-none px-6 py-4 shadow-lg shadow-blue-600/10">
-          <p className="text-sm leading-relaxed whitespace-pre-wrap font-medium">{interaction.content}</p>
+      <div className="msg-enter flex justify-end mb-5">
+        <div
+          className="max-w-[78%] rounded-2xl rounded-br-md px-4 py-3 text-[14.5px] leading-relaxed font-medium"
+          style={{ background: "#fff", color: "#0a0a0b" }}
+        >
+          {interaction.content}
         </div>
       </div>
     );
   }
 
   return (
-    <div className="flex items-start gap-4 mb-6 group">
-      <div
-        className={`w-10 h-10 rounded-2xl ${mentor.bgColor} flex items-center justify-center text-sm font-black ${mentor.color} flex-shrink-0 shadow-sm border border-current/5`}
-      >
-        {mentor.avatar}
-      </div>
-      <div className="max-w-[85%] bg-white border border-gray-100 rounded-3xl rounded-bl-none px-6 py-4 shadow-md shadow-gray-200/20 group-hover:shadow-lg transition-shadow">
-        <div className="flex items-center gap-2 mb-1.5">
-          <p className={`text-[10px] font-black uppercase tracking-widest ${mentor.color}`}>{mentor.name}</p>
-          <span className="h-1 w-1 rounded-full bg-gray-200" />
-          <p className="text-[10px] font-bold text-gray-300 uppercase">Mentor</p>
+    <div className="msg-enter flex items-start gap-3 mb-6">
+      <Avatar mentor={mentor} size={32} />
+      <div className="flex-1 min-w-0 max-w-[82%]">
+        <div className="flex items-baseline gap-2 mb-1.5">
+          <span className="text-[12.5px] font-medium" style={{ color: mentor.accent }}>{mentor.first}</span>
+          <span className="mono text-[10px] uppercase tracking-[0.14em]" style={{ color: "var(--text-faint)" }}>
+            {mentor.role.split(" · ")[0]}
+          </span>
         </div>
-        <p className="text-sm text-gray-700 leading-relaxed whitespace-pre-wrap font-medium">{interaction.content}</p>
+        <div className="bubble text-[14.5px] leading-[1.65] whitespace-pre-wrap" style={{ color: "var(--text)" }}>
+          {interaction.content.split("\n\n").map((para, i) => (
+            <p key={i} style={{ marginTop: i ? "0.85em" : 0 }}>{renderMd(para)}</p>
+          ))}
+        </div>
       </div>
     </div>
   );

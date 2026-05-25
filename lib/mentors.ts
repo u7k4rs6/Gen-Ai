@@ -1,13 +1,22 @@
 export type MentorId = "anshuman" | "abhimanyu" | "kshitij";
 
+export interface Suggestion {
+  icon: string;
+  text: string;
+}
+
 export interface Mentor {
   id: MentorId;
   name: string;
+  first: string;
+  initials: string;
   title: string;
-  avatar: string;
-  color: string;
-  bgColor: string;
-  suggestions: string[];
+  role: string;
+  bio: string;
+  accent: string;
+  accent2: string;
+  photo: string | null;
+  suggestions: Suggestion[];
   systemPrompt: string;
 }
 
@@ -15,15 +24,19 @@ export const mentors: Record<MentorId, Mentor> = {
   anshuman: {
     id: "anshuman",
     name: "Anshuman Singh",
+    first: "Anshuman",
+    initials: "AS",
     title: "CEO & Co-founder, Scaler Academy",
-    avatar: "AS",
-    color: "text-blue-700",
-    bgColor: "bg-blue-100",
+    role: "Startup vision · Strategy",
+    bio: "Builds outcome-driven products. Talks first-principles, hiring, and the long game.",
+    accent: "#f5a524",
+    accent2: "#f1397c",
+    photo: null,
     suggestions: [
-      "What's your vision for the future of tech education in India?",
-      "How do you think about building a high-growth startup?",
-      "What advice would you give to someone switching to a tech career?",
-      "How does Scaler measure the success of its students?",
+      { icon: "compass", text: "What's your vision for the future of tech education in India?" },
+      { icon: "rocket",  text: "How do you think about building a high-growth startup?" },
+      { icon: "switch",  text: "What advice would you give to someone switching to a tech career?" },
+      { icon: "metric",  text: "How does Scaler measure the success of its students?" },
     ],
     systemPrompt: `You are Anshuman Singh, CEO and Co-founder of Scaler Academy (formerly known as InterviewBit). You are a visionary entrepreneur, IIT Bombay alumnus, and former software engineer who worked at top tech companies. You co-founded InterviewBit in 2011 and launched Scaler in 2019 to solve the quality-gap in Indian tech education.
 
@@ -75,15 +88,19 @@ Anshuman: Honestly? For most software engineers, an MBA is not the highest ROI i
   abhimanyu: {
     id: "abhimanyu",
     name: "Abhimanyu Saxena",
+    first: "Abhimanyu",
+    initials: "AX",
     title: "Co-founder, Scaler Academy / InterviewBit",
-    avatar: "AX",
-    color: "text-emerald-700",
-    bgColor: "bg-emerald-100",
+    role: "DSA · System Design",
+    bio: "First-principles engineer. Cares about depth over shortcuts and the why behind every decision.",
+    accent: "#2dd4bf",
+    accent2: "#22d3ee",
+    photo: null,
     suggestions: [
-      "How should I approach learning data structures and algorithms?",
-      "What's your take on system design interviews?",
-      "How do you think about clean code and code quality?",
-      "What's the best way to prepare for FAANG interviews?",
+      { icon: "code",   text: "How should I approach learning data structures and algorithms?" },
+      { icon: "layers", text: "What's your take on system design interviews?" },
+      { icon: "clean",  text: "How do you think about clean code and code quality?" },
+      { icon: "target", text: "What's the best way to prepare for FAANG interviews?" },
     ],
     systemPrompt: `You are Abhimanyu Saxena, Co-founder of Scaler Academy and InterviewBit. You are an IIT Delhi graduate and deeply technical engineer who has spent years helping software engineers crack top tech companies and grow their careers. You built InterviewBit from the ground up to solve the problem of poor interview preparation, and co-founded Scaler to go deeper into education and mentorship.
 
@@ -134,15 +151,19 @@ Abhimanyu: Not necessary, but it's a strong signal. Competitive programming buil
   kshitij: {
     id: "kshitij",
     name: "Kshitij Mishra",
+    first: "Kshitij",
+    initials: "KM",
     title: "Instructor & Mentor, Scaler Academy",
-    avatar: "KM",
-    color: "text-purple-700",
-    bgColor: "bg-purple-100",
+    role: "Algorithms · Teaching",
+    bio: "Competitive programmer turned teacher. Believes if you can't explain it, you don't get it.",
+    accent: "#a78bfa",
+    accent2: "#e879f9",
+    photo: null,
     suggestions: [
-      "Can you explain dynamic programming with a simple example?",
-      "How do I get better at solving graph problems?",
-      "What's the best way to debug my code during an interview?",
-      "How should I handle a problem I've never seen before in an interview?",
+      { icon: "tree",   text: "Can you explain dynamic programming with a simple example?" },
+      { icon: "graph",  text: "How do I get better at solving graph problems?" },
+      { icon: "bug",    text: "What's the best way to debug my code during an interview?" },
+      { icon: "puzzle", text: "How should I handle a problem I've never seen before?" },
     ],
     systemPrompt: `You are Kshitij Mishra, a senior instructor and mentor at Scaler Academy specializing in Data Structures, Algorithms, and competitive programming. You have a deep background in competitive programming (with experience on Codeforces and CodeChef), and you now channel that expertise into teaching thousands of Scaler students how to think algorithmically and crack their dream tech jobs.
 
