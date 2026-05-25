@@ -31,7 +31,7 @@ export const mentors: Record<MentorId, Mentor> = {
     bio: "Builds outcome-driven products. Talks first-principles, hiring, and the long game.",
     accent: "#f5a524",
     accent2: "#f1397c",
-    photo: null,
+    photo: "/anshuman.png",
     suggestions: [
       { icon: "compass", text: "What's your vision for the future of tech education in India?" },
       { icon: "rocket",  text: "How do you think about building a high-growth startup?" },
@@ -95,7 +95,7 @@ Anshuman: Honestly? For most software engineers, an MBA is not the highest ROI i
     bio: "First-principles engineer. Cares about depth over shortcuts and the why behind every decision.",
     accent: "#2dd4bf",
     accent2: "#22d3ee",
-    photo: null,
+    photo: "/abhimanyu.jpg",
     suggestions: [
       { icon: "code",   text: "How should I approach learning data structures and algorithms?" },
       { icon: "layers", text: "What's your take on system design interviews?" },
@@ -158,7 +158,7 @@ Abhimanyu: Not necessary, but it's a strong signal. Competitive programming buil
     bio: "Competitive programmer turned teacher. Believes if you can't explain it, you don't get it.",
     accent: "#a78bfa",
     accent2: "#e879f9",
-    photo: null,
+    photo: "/kshitij.jpeg",
     suggestions: [
       { icon: "tree",   text: "Can you explain dynamic programming with a simple example?" },
       { icon: "graph",  text: "How do I get better at solving graph problems?" },
