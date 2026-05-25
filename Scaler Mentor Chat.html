@@ -1,0 +1,717 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Scaler Mentor Chat — Redesign</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700&family=Instrument+Serif:ital@0;1&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<style>
+  :root {
+    --bg: #0a0a0b;
+    --panel: #111114;
+    --panel-2: #16161a;
+    --line: #1f1f24;
+    --line-2: #292930;
+    --text: #ecedee;
+    --text-dim: #8b8b94;
+    --text-faint: #5a5a63;
+  }
+  html, body, #root { height: 100%; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Geist', system-ui, -apple-system, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+    overflow: hidden;
+  }
+  .serif { font-family: 'Instrument Serif', 'Times New Roman', serif; font-weight: 400; letter-spacing: -0.01em; }
+  .mono { font-family: 'JetBrains Mono', ui-monospace, monospace; }
+  /* scrollbar */
+  ::-webkit-scrollbar { width: 8px; height: 8px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: #25252b; border-radius: 8px; }
+  ::-webkit-scrollbar-thumb:hover { background: #34343c; }
+
+  /* mentor accent palette as CSS vars set on root container */
+  [data-accent="anshuman"] { --accent: #f5a524; --accent-2: #f1397c; --accent-soft: rgba(245,165,36,0.10); --accent-line: rgba(245,165,36,0.25); }
+  [data-accent="abhimanyu"] { --accent: #2dd4bf; --accent-2: #22d3ee; --accent-soft: rgba(45,212,191,0.10); --accent-line: rgba(45,212,191,0.25); }
+  [data-accent="kshitij"]   { --accent: #a78bfa; --accent-2: #e879f9; --accent-soft: rgba(167,139,250,0.10); --accent-line: rgba(167,139,250,0.28); }
+
+  /* ambient mentor glow on canvas */
+  .ambient {
+    position: absolute; inset: 0; pointer-events: none; overflow: hidden;
+    transition: opacity 600ms ease;
+  }
+  .ambient::before, .ambient::after {
+    content: ""; position: absolute; border-radius: 9999px;
+    filter: blur(120px);
+    opacity: 0.55;
+    transition: background 700ms ease;
+  }
+  .ambient::before {
+    width: 520px; height: 520px; top: -160px; right: -120px;
+    background: var(--accent);
+    opacity: 0.10;
+  }
+  .ambient::after {
+    width: 420px; height: 420px; bottom: -160px; left: -80px;
+    background: var(--accent-2);
+    opacity: 0.07;
+  }
+
+  /* keyframes */
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translate3d(0, 8px, 0); }
+    to   { opacity: 1; transform: translate3d(0, 0, 0); }
+  }
+  @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+  @keyframes shimmer {
+    0% { transform: translateX(-100%); }
+    100% { transform: translateX(100%); }
+  }
+  @keyframes pulseDot {
+    0%, 80%, 100% { transform: scale(0.6); opacity: 0.4; }
+    40% { transform: scale(1); opacity: 1; }
+  }
+  @keyframes orbSpin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+  }
+  .fade-up { animation: fadeUp 480ms cubic-bezier(.22,.61,.36,1) both; }
+  .fade-in { animation: fadeIn 600ms ease both; }
+  .dot { animation: pulseDot 1.2s infinite ease-in-out both; }
+
+  /* Avatar orb — distinct visual identity per mentor via conic gradient */
+  .orb {
+    position: relative;
+    border-radius: 9999px;
+    background: conic-gradient(from 220deg, var(--accent), var(--accent-2), var(--accent));
+    overflow: hidden;
+    isolation: isolate;
+  }
+  .orb::before {
+    content: "";
+    position: absolute; inset: 1.5px;
+    border-radius: 9999px;
+    background:
+      radial-gradient(circle at 30% 25%, rgba(255,255,255,0.45), transparent 38%),
+      radial-gradient(circle at 70% 80%, rgba(0,0,0,0.35), transparent 50%),
+      linear-gradient(160deg, color-mix(in oklab, var(--accent) 60%, #0a0a0b), color-mix(in oklab, var(--accent-2) 50%, #0a0a0b));
+  }
+  .orb > span {
+    position: relative; z-index: 1;
+    display: flex; align-items: center; justify-content: center;
+    width: 100%; height: 100%;
+    font-family: 'Instrument Serif', serif;
+    color: rgba(255,255,255,0.95);
+    text-shadow: 0 1px 0 rgba(0,0,0,0.2);
+    letter-spacing: -0.02em;
+  }
+  .orb.active::after {
+    content: "";
+    position: absolute;
+    inset: -6px;
+    border-radius: 9999px;
+    background: conic-gradient(from 0deg, var(--accent), transparent 40%, transparent 60%, var(--accent-2));
+    z-index: -1;
+    opacity: 0.7;
+    animation: orbSpin 8s linear infinite;
+    filter: blur(6px);
+  }
+
+  /* Active mentor row highlight */
+  .mentor-card.active {
+    background: linear-gradient(180deg, rgba(255,255,255,0.04), rgba(255,255,255,0.015));
+    border-color: var(--line-2);
+  }
+  .mentor-card.active .name { color: var(--text); }
+
+  /* chip */
+  .chip {
+    position: relative;
+    background: var(--panel-2);
+    border: 1px solid var(--line);
+    transition: border-color 220ms ease, transform 220ms ease, background 220ms ease;
+  }
+  .chip:hover {
+    border-color: var(--accent-line);
+    background: linear-gradient(180deg, var(--accent-soft), var(--panel-2));
+    transform: translateY(-1px);
+  }
+  .chip::after {
+    content: "";
+    position: absolute; left: 0; top: 0; bottom: 0; width: 2px;
+    background: var(--accent);
+    opacity: 0;
+    transition: opacity 220ms ease;
+    border-radius: 2px 0 0 2px;
+  }
+  .chip:hover::after { opacity: 1; }
+
+  /* message bubble entry */
+  .msg-enter { animation: fadeUp 380ms cubic-bezier(.22,.61,.36,1) both; }
+
+  /* input focus ring colored by mentor */
+  .composer:focus-within {
+    border-color: var(--accent-line);
+    box-shadow: 0 0 0 4px var(--accent-soft), 0 20px 60px -20px rgba(0,0,0,0.6);
+  }
+
+  /* send button */
+  .send-btn {
+    background: linear-gradient(180deg, var(--accent), color-mix(in oklab, var(--accent-2) 70%, var(--accent)));
+    box-shadow: 0 6px 24px -8px var(--accent), inset 0 1px 0 rgba(255,255,255,0.25);
+  }
+  .send-btn:disabled { background: #1c1c22; box-shadow: none; color: #555; }
+
+  /* keycap */
+  .kbd {
+    display: inline-flex; align-items: center; justify-content: center;
+    min-width: 18px; height: 18px; padding: 0 5px;
+    border: 1px solid var(--line-2);
+    background: var(--panel-2);
+    border-radius: 4px;
+    font-size: 10.5px;
+    color: var(--text-dim);
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  /* gridline backdrop, very subtle */
+  .grid-bg {
+    background-image:
+      linear-gradient(rgba(255,255,255,0.018) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255,255,255,0.018) 1px, transparent 1px);
+    background-size: 40px 40px;
+    background-position: -1px -1px;
+  }
+
+  /* prose tweaks */
+  .bubble p { margin: 0; }
+  .bubble strong { color: #fff; font-weight: 600; }
+</style>
+</head>
+<body>
+<div id="root"></div>
+
+<script type="text/babel" data-presets="env,react">
+const { useState, useEffect, useRef, useMemo } = React;
+
+/* ------------------------------ DATA ------------------------------ */
+const MENTORS = [
+  {
+    id: "anshuman",
+    name: "Anshuman Singh",
+    first: "Anshuman",
+    initials: "AS",
+    title: "CEO & Co-founder",
+    role: "Startup vision · Strategy",
+    bio: "Builds outcome-driven products. Talks first-principles, hiring, and the long game.",
+    accent: "#f5a524",
+    suggestions: [
+      { icon: "compass",  text: "What's your vision for the future of tech education?" },
+      { icon: "rocket",   text: "How do you think about building a high-growth startup?" },
+      { icon: "switch",   text: "Advice for someone switching to a tech career?" },
+      { icon: "metric",   text: "How does Scaler measure student success?" },
+    ],
+  },
+  {
+    id: "abhimanyu",
+    name: "Abhimanyu Saxena",
+    first: "Abhimanyu",
+    initials: "AX",
+    title: "Co-founder · Engineering",
+    role: "DSA · System Design",
+    bio: "First-principles engineer. Cares about depth over shortcuts and the why behind every decision.",
+    accent: "#2dd4bf",
+    suggestions: [
+      { icon: "code",     text: "How should I approach learning data structures?" },
+      { icon: "layers",   text: "What's your take on system design interviews?" },
+      { icon: "clean",    text: "How do you think about clean code and quality?" },
+      { icon: "target",   text: "Best way to prepare for FAANG interviews?" },
+    ],
+  },
+  {
+    id: "kshitij",
+    name: "Kshitij Mishra",
+    first: "Kshitij",
+    initials: "KM",
+    title: "Senior Instructor",
+    role: "Algorithms · Teaching",
+    bio: "Competitive programmer turned teacher. Believes if you can't explain it, you don't get it.",
+    accent: "#a78bfa",
+    suggestions: [
+      { icon: "tree",     text: "Can you explain dynamic programming simply?" },
+      { icon: "graph",    text: "How do I get better at graph problems?" },
+      { icon: "bug",      text: "How to debug code during an interview?" },
+      { icon: "puzzle",   text: "What if I see a problem I've never seen before?" },
+    ],
+  },
+];
+const MENTOR_BY_ID = Object.fromEntries(MENTORS.map(m => [m.id, m]));
+
+/* simulated replies per mentor — stand in for the real API in this prototype */
+const CANNED = {
+  anshuman: [
+    "Great question — and I'll answer with data, not marketing. The signal that matters is *outcomes*: salary growth, placement velocity, NPS. If those move, the strategy is working. If they don't, we're telling ourselves a story.\n\nThe playbook I keep coming back to: stay obsessive about the problem, hire for ownership, and build the kind of company where the best people refuse to leave.",
+    "First-principles answer: what changed in the last five years is that *quality of input* compounds harder than ever. Better mentors, better problems, better feedback loops — students don't need more content, they need the *right* feedback at the right moment.",
+  ],
+  abhimanyu: [
+    "Let's break it down. Most people start with the wrong layer of abstraction — they jump to advanced topics before they can write a clean binary search.\n\n1. Master arrays, strings, hashmaps. Two weeks.\n2. Add recursion + trees.\n3. Then — and only then — graphs and DP.\n\nThe foundation is everything. *Don't rush it.*",
+    "The most common mistake is starting to design before clarifying requirements. The first 5–8 minutes should be questions — scale, read/write ratio, latency budget. Architecture without constraints is just drawing boxes.",
+  ],
+  kshitij: [
+    "Totally normal — this trips up almost everyone at first. Here's the unlock: **DP is just recursion with memory**. That's it.\n\nStart with Fibonacci. Write the recursive version. Notice you compute fib(3) three times. Now cache it. Congrats — you just did top-down DP. Once that clicks, tabulation is the same idea, upside down.",
+    "Great instinct to ask. Use BFS when you care about *shortest path* — it expands like ripples in a pond. Use DFS when you want to explore deeply — like walking into a maze and going as far as you can before backtracking. Try both on the same problem once. You'll feel the difference.",
+  ],
+};
+
+/* ------------------------------ ICONS ------------------------------ */
+const Icon = ({ name, className = "w-4 h-4" }) => {
+  const stroke = "currentColor";
+  const props = { fill: "none", stroke, strokeWidth: 1.6, strokeLinecap: "round", strokeLinejoin: "round", viewBox: "0 0 24 24", className };
+  switch (name) {
+    case "compass": return (<svg {...props}><circle cx="12" cy="12" r="9"/><polygon points="15 9 11 13 9 15 13 11"/></svg>);
+    case "rocket":  return (<svg {...props}><path d="M5 15c0-5 4-10 9-10 0 5-4 10-9 10z"/><path d="M9 15s-2 2-2 4 4-2 4-2"/><circle cx="12" cy="9" r="1.2"/></svg>);
+    case "switch":  return (<svg {...props}><path d="M4 7h12l-3-3"/><path d="M20 17H8l3 3"/></svg>);
+    case "metric":  return (<svg {...props}><path d="M4 19V9"/><path d="M10 19V5"/><path d="M16 19v-8"/><path d="M22 19H2"/></svg>);
+    case "code":    return (<svg {...props}><polyline points="8 8 4 12 8 16"/><polyline points="16 8 20 12 16 16"/><line x1="14" y1="6" x2="10" y2="18"/></svg>);
+    case "layers":  return (<svg {...props}><polygon points="12 3 22 9 12 15 2 9 12 3"/><polyline points="2 15 12 21 22 15"/></svg>);
+    case "clean":   return (<svg {...props}><path d="M5 12l4 4L19 6"/></svg>);
+    case "target":  return (<svg {...props}><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.4" fill="currentColor"/></svg>);
+    case "tree":    return (<svg {...props}><circle cx="12" cy="5" r="2"/><circle cx="6" cy="13" r="2"/><circle cx="18" cy="13" r="2"/><circle cx="6" cy="20" r="1.5"/><circle cx="12" cy="20" r="1.5"/><path d="M12 7v0M12 7l-6 4M12 7l6 4M6 15v3M18 15v0M6 18l6 2M18 15l-6 5"/></svg>);
+    case "graph":   return (<svg {...props}><circle cx="6" cy="6" r="2"/><circle cx="18" cy="6" r="2"/><circle cx="6" cy="18" r="2"/><circle cx="18" cy="18" r="2"/><circle cx="12" cy="12" r="2"/><path d="M8 6h8M6 8v8M18 8v8M8 7l3 3M16 7l-3 3M8 17l3-3M16 17l-3-3"/></svg>);
+    case "bug":     return (<svg {...props}><rect x="8" y="8" width="8" height="12" rx="4"/><path d="M3 13h5M16 13h5M5 7l3 2M19 7l-3 2M5 19l3-2M19 19l-3-2"/></svg>);
+    case "puzzle":  return (<svg {...props}><path d="M10 4h4v3a2 2 0 1 0 4 0v3h-4a2 2 0 1 1 0 4h4v3h-4a2 2 0 1 0-4 0H6v-4a2 2 0 1 1 0-4H6V7h4a2 2 0 1 0 0-3z"/></svg>);
+    case "send":    return (<svg {...props} strokeWidth={1.8}><path d="M5 12l14-7-4 14-3-6-7-1z"/></svg>);
+    case "plus":    return (<svg {...props}><path d="M12 5v14M5 12h14"/></svg>);
+    case "sparkle": return (<svg {...props}><path d="M12 4l1.6 4.4L18 10l-4.4 1.6L12 16l-1.6-4.4L6 10l4.4-1.6L12 4z"/><path d="M19 16l.7 1.8L21.5 18.5l-1.8.7L19 21l-.7-1.8L16.5 18.5l1.8-.7L19 16z"/></svg>);
+    case "chevron": return (<svg {...props}><polyline points="9 6 15 12 9 18"/></svg>);
+    case "settings":return (<svg {...props}><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .34 1.87l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.7 1.7 0 0 0-1.87-.34 1.7 1.7 0 0 0-1 1.55V21a2 2 0 1 1-4 0v-.09a1.7 1.7 0 0 0-1.11-1.55 1.7 1.7 0 0 0-1.87.34l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.7 1.7 0 0 0 4.6 15a1.7 1.7 0 0 0-1.55-1H3a2 2 0 1 1 0-4h.09A1.7 1.7 0 0 0 4.6 9 1.7 1.7 0 0 0 4.26 7.13l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.7 1.7 0 0 0 9 4.6a1.7 1.7 0 0 0 1-1.55V3a2 2 0 1 1 4 0v.09a1.7 1.7 0 0 0 1 1.55 1.7 1.7 0 0 0 1.87-.34l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.7 1.7 0 0 0 19.4 9c.18.43.6 1 1.55 1H21a2 2 0 1 1 0 4h-.09a1.7 1.7 0 0 0-1.55 1z"/></svg>);
+    case "history": return (<svg {...props}><path d="M3 12a9 9 0 1 0 3-6.7"/><polyline points="3 4 3 9 8 9"/><polyline points="12 7 12 12 16 14"/></svg>);
+    default: return null;
+  }
+};
+
+/* ------------------------------ AVATAR ------------------------------ */
+const Avatar = ({ mentor, size = 36, active = false }) => (
+  <div
+    className={"orb " + (active ? "active" : "")}
+    style={{
+      width: size, height: size,
+      "--accent": mentor.accent,
+      "--accent-2": mentor.id === "anshuman" ? "#f1397c" : mentor.id === "abhimanyu" ? "#22d3ee" : "#e879f9",
+    }}
+    aria-hidden="true"
+  >
+    <span style={{ fontSize: size * 0.42 }}>{mentor.initials}</span>
+  </div>
+);
+
+/* ------------------------------ SIDEBAR ------------------------------ */
+function Sidebar({ activeId, onSelect, onNewChat }) {
+  return (
+    <aside className="w-[280px] shrink-0 h-full border-r border-[var(--line)] bg-[var(--panel)] flex flex-col">
+      {/* Brand */}
+      <div className="px-5 pt-5 pb-4 flex items-center justify-between">
+        <div className="flex items-center gap-2.5">
+          <div className="w-7 h-7 rounded-md bg-white text-black flex items-center justify-center">
+            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round"><path d="M5 6h14M5 12h14M5 18h9"/></svg>
+          </div>
+          <div className="leading-tight">
+            <div className="text-[13px] font-semibold tracking-tight">Mentor Chat</div>
+            <div className="text-[10.5px] mono text-[var(--text-faint)]">v0.9 · beta</div>
+          </div>
+        </div>
+      </div>
+
+      {/* New chat */}
+      <div className="px-3">
+        <button
+          onClick={onNewChat}
+          className="w-full flex items-center justify-between gap-2 px-3 py-2.5 rounded-lg bg-[var(--panel-2)] border border-[var(--line)] hover:border-[var(--line-2)] hover:bg-white/[0.025] transition-colors group"
+        >
+          <span className="flex items-center gap-2 text-[13px] text-[var(--text)]">
+            <Icon name="plus" className="w-3.5 h-3.5 text-[var(--text-dim)] group-hover:text-[var(--text)]" />
+            New conversation
+          </span>
+          <span className="mono text-[10px] text-[var(--text-faint)]">⌘N</span>
+        </button>
+      </div>
+
+      {/* Mentor label */}
+      <div className="px-5 pt-6 pb-2 flex items-center justify-between">
+        <span className="text-[10px] mono uppercase tracking-[0.14em] text-[var(--text-faint)]">Mentors</span>
+        <span className="text-[10px] mono text-[var(--text-faint)]">3</span>
+      </div>
+
+      {/* Mentor cards */}
+      <div className="px-2.5 flex flex-col gap-1">
+        {MENTORS.map((m) => (
+          <button
+            key={m.id}
+            data-accent={m.id}
+            onClick={() => onSelect(m.id)}
+            className={"mentor-card text-left rounded-xl p-2.5 pr-3 flex items-center gap-3 border border-transparent transition-colors hover:bg-white/[0.025] " + (activeId === m.id ? "active" : "")}
+          >
+            <Avatar mentor={m} size={36} active={activeId === m.id} />
+            <div className="flex-1 min-w-0">
+              <div className="name text-[13px] font-medium text-[var(--text-dim)] truncate flex items-center gap-1.5">
+                {m.first}
+                {activeId === m.id && (
+                  <span className="inline-block w-1.5 h-1.5 rounded-full" style={{ background: m.accent, boxShadow: `0 0 8px ${m.accent}` }} />
+                )}
+              </div>
+              <div className="text-[11px] text-[var(--text-faint)] truncate mono">{m.role}</div>
+            </div>
+            {activeId === m.id && (
+              <Icon name="chevron" className="w-3 h-3 text-[var(--text-faint)]" />
+            )}
+          </button>
+        ))}
+      </div>
+
+      {/* History label */}
+      <div className="px-5 pt-7 pb-2 flex items-center justify-between">
+        <span className="text-[10px] mono uppercase tracking-[0.14em] text-[var(--text-faint)]">Recent</span>
+      </div>
+      <div className="px-2.5 flex flex-col gap-0.5 overflow-y-auto">
+        {[
+          { t: "System design — Twitter scale", who: "abhimanyu", when: "2h" },
+          { t: "Hiring under uncertainty",       who: "anshuman",  when: "yesterday" },
+          { t: "DP starter problems",            who: "kshitij",   when: "2d" },
+          { t: "When to use BFS over DFS",       who: "kshitij",   when: "1w" },
+        ].map((h, i) => (
+          <button key={i} className="text-left px-3 py-2 rounded-lg hover:bg-white/[0.025] flex items-center gap-2.5 group transition-colors">
+            <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ background: MENTOR_BY_ID[h.who].accent, opacity: 0.7 }} />
+            <span className="text-[12.5px] text-[var(--text-dim)] group-hover:text-[var(--text)] truncate flex-1">{h.t}</span>
+            <span className="mono text-[10px] text-[var(--text-faint)] shrink-0">{h.when}</span>
+          </button>
+        ))}
+      </div>
+
+      {/* Footer */}
+      <div className="mt-auto p-3 border-t border-[var(--line)]">
+        <div className="px-2.5 py-2 flex items-center gap-3">
+          <div className="w-7 h-7 rounded-full bg-gradient-to-br from-zinc-700 to-zinc-900 flex items-center justify-center text-[11px] font-medium">YD</div>
+          <div className="flex-1 min-w-0">
+            <div className="text-[12.5px] truncate">You</div>
+            <div className="mono text-[10px] text-[var(--text-faint)]">Free plan · 14/50</div>
+          </div>
+        </div>
+      </div>
+    </aside>
+  );
+}
+
+/* ------------------------------ WELCOME ------------------------------ */
+function Welcome({ mentor, onPick }) {
+  return (
+    <div key={mentor.id} className="max-w-[760px] mx-auto px-8 pt-16 pb-10 fade-in">
+      {/* Spotlight */}
+      <div className="flex flex-col items-start gap-6">
+        <div className="flex items-center gap-5">
+          <Avatar mentor={mentor} size={72} active />
+          <div>
+            <div className="mono text-[10.5px] uppercase tracking-[0.16em] text-[var(--text-faint)] mb-1.5 flex items-center gap-2">
+              <span className="inline-block w-1.5 h-1.5 rounded-full" style={{ background: mentor.accent, boxShadow: `0 0 10px ${mentor.accent}` }} />
+              Mentor · online
+            </div>
+            <h1 className="serif text-[44px] leading-[1] tracking-tight text-white">
+              {mentor.name}
+            </h1>
+            <div className="mt-1.5 text-[13.5px] text-[var(--text-dim)]">
+              <span className="text-[var(--text)]">{mentor.title}</span>
+              <span className="mx-2 text-[var(--text-faint)]">·</span>
+              <span>{mentor.role}</span>
+            </div>
+          </div>
+        </div>
+
+        <p className="text-[15.5px] leading-relaxed text-[var(--text-dim)] max-w-[58ch]">
+          {mentor.bio}
+        </p>
+
+        {/* Divider */}
+        <div className="flex items-center gap-3 w-full pt-2">
+          <div className="h-px flex-1 bg-[var(--line)]" />
+          <span className="mono text-[10px] uppercase tracking-[0.16em] text-[var(--text-faint)] flex items-center gap-1.5">
+            <Icon name="sparkle" className="w-3 h-3" style={{ color: "var(--accent)" }} />
+            Suggested starters
+          </span>
+          <div className="h-px flex-1 bg-[var(--line)]" />
+        </div>
+
+        {/* Chips */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 w-full">
+          {mentor.suggestions.map((s, i) => (
+            <button
+              key={i}
+              onClick={() => onPick(s.text)}
+              className="chip group text-left rounded-xl pl-4 pr-3 py-3.5 flex items-start gap-3"
+              style={{ animationDelay: `${80 + i * 60}ms` }}
+            >
+              <span className="mt-0.5 shrink-0 w-7 h-7 rounded-lg flex items-center justify-center text-[var(--text-dim)] group-hover:text-[var(--accent)] transition-colors" style={{ background: "rgba(255,255,255,0.025)" }}>
+                <Icon name={s.icon} className="w-3.5 h-3.5" />
+              </span>
+              <span className="text-[13.5px] leading-snug text-[var(--text)] flex-1 pr-1">{s.text}</span>
+              <Icon name="chevron" className="w-3 h-3 text-[var(--text-faint)] group-hover:text-[var(--accent)] transition-colors mt-1" />
+            </button>
+          ))}
+        </div>
+
+        {/* Tip */}
+        <div className="mt-2 flex items-center gap-2 text-[11.5px] text-[var(--text-faint)] mono">
+          <span className="kbd">↹</span>
+          <span>cycle mentors</span>
+          <span className="mx-1.5">·</span>
+          <span className="kbd">↵</span>
+          <span>send</span>
+          <span className="mx-1.5">·</span>
+          <span className="kbd">⇧</span><span className="kbd">↵</span>
+          <span>newline</span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ------------------------------ MESSAGE ------------------------------ */
+function renderMd(text) {
+  // tiny markdown: **bold**, line breaks
+  const out = [];
+  const parts = text.split(/(\*\*[^*]+\*\*|\*[^*]+\*)/g);
+  parts.forEach((p, i) => {
+    if (/^\*\*[^*]+\*\*$/.test(p)) out.push(<strong key={i}>{p.slice(2, -2)}</strong>);
+    else if (/^\*[^*]+\*$/.test(p)) out.push(<em key={i} style={{ color: "var(--text)" }}>{p.slice(1, -1)}</em>);
+    else out.push(<React.Fragment key={i}>{p}</React.Fragment>);
+  });
+  return out;
+}
+
+function MessageBubble({ msg, mentor }) {
+  const isUser = msg.role === "user";
+  if (isUser) {
+    return (
+      <div className="msg-enter flex justify-end mb-5">
+        <div className="max-w-[78%] rounded-2xl rounded-br-md px-4 py-3 bg-white text-[#0a0a0b] text-[14.5px] leading-relaxed font-medium">
+          {msg.content}
+        </div>
+      </div>
+    );
+  }
+  return (
+    <div className="msg-enter flex items-start gap-3 mb-6">
+      <Avatar mentor={mentor} size={32} />
+      <div className="flex-1 min-w-0 max-w-[82%]">
+        <div className="flex items-baseline gap-2 mb-1.5">
+          <span className="text-[12.5px] font-medium" style={{ color: mentor.accent }}>{mentor.first}</span>
+          <span className="mono text-[10px] uppercase tracking-[0.14em] text-[var(--text-faint)]">{mentor.role.split(" · ")[0]}</span>
+        </div>
+        <div className="bubble text-[14.5px] leading-[1.65] text-[var(--text)] whitespace-pre-wrap">
+          {msg.content.split("\n\n").map((para, i) => (
+            <p key={i} style={{ marginTop: i ? "0.85em" : 0 }}>{renderMd(para)}</p>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function Typing({ mentor }) {
+  return (
+    <div className="msg-enter flex items-start gap-3 mb-6">
+      <Avatar mentor={mentor} size={32} />
+      <div className="flex-1 min-w-0">
+        <div className="flex items-baseline gap-2 mb-1.5">
+          <span className="text-[12.5px] font-medium" style={{ color: mentor.accent }}>{mentor.first}</span>
+          <span className="mono text-[10px] uppercase tracking-[0.14em] text-[var(--text-faint)]">thinking…</span>
+        </div>
+        <div className="flex items-center gap-1.5 h-6">
+          <span className="dot w-1.5 h-1.5 rounded-full" style={{ background: mentor.accent, animationDelay: "0ms" }} />
+          <span className="dot w-1.5 h-1.5 rounded-full" style={{ background: mentor.accent, animationDelay: "150ms" }} />
+          <span className="dot w-1.5 h-1.5 rounded-full" style={{ background: mentor.accent, animationDelay: "300ms" }} />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ------------------------------ COMPOSER ------------------------------ */
+function Composer({ mentor, value, setValue, onSend, busy }) {
+  const taRef = useRef(null);
+  useEffect(() => {
+    const ta = taRef.current; if (!ta) return;
+    ta.style.height = "auto";
+    ta.style.height = Math.min(ta.scrollHeight, 200) + "px";
+  }, [value]);
+
+  return (
+    <div className="px-8 pb-7 pt-2 relative z-10">
+      <div className="max-w-[760px] mx-auto">
+        <div className="composer rounded-2xl border border-[var(--line-2)] bg-[var(--panel-2)] transition-shadow shadow-[0_20px_50px_-30px_rgba(0,0,0,0.8)]">
+          <div className="flex items-end gap-2 p-2.5">
+            <textarea
+              ref={taRef}
+              value={value}
+              onChange={(e) => setValue(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); onSend(); }
+              }}
+              placeholder={`Ask ${mentor.first} anything…`}
+              rows={1}
+              className="flex-1 resize-none bg-transparent outline-none text-[14.5px] leading-relaxed text-[var(--text)] placeholder:text-[var(--text-faint)] pt-2 pb-1.5 px-1 max-h-[200px]"
+              disabled={busy}
+            />
+            <button
+              onClick={onSend}
+              disabled={!value.trim() || busy}
+              className="send-btn w-10 h-10 rounded-xl text-black flex items-center justify-center transition-all disabled:cursor-not-allowed"
+              aria-label="Send"
+            >
+              <Icon name="send" className="w-4 h-4" />
+            </button>
+          </div>
+          {/* meta row */}
+          <div className="flex items-center justify-between px-4 pb-2.5 pt-0.5 border-t border-white/[0.03] mt-0.5">
+            <div className="flex items-center gap-3 text-[11px] text-[var(--text-faint)]">
+              <span className="flex items-center gap-1.5">
+                <span className="inline-block w-1.5 h-1.5 rounded-full" style={{ background: mentor.accent }} />
+                <span className="mono">{mentor.first.toLowerCase()}.v1</span>
+              </span>
+              <span className="text-[var(--text-faint)]">·</span>
+              <span>Replies may be wrong — verify independently.</span>
+            </div>
+            <div className="flex items-center gap-1.5 text-[11px] text-[var(--text-faint)] mono">
+              <span className="kbd">↵</span>
+              <span>send</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ------------------------------ APP ------------------------------ */
+function App() {
+  const [activeId, setActiveId] = useState("anshuman");
+  const [convos, setConvos] = useState({ anshuman: [], abhimanyu: [], kshitij: [] });
+  const [input, setInput] = useState("");
+  const [busy, setBusy] = useState(false);
+  const scrollRef = useRef(null);
+
+  const mentor = MENTOR_BY_ID[activeId];
+  const messages = convos[activeId];
+
+  useEffect(() => {
+    if (scrollRef.current) {
+      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+    }
+  }, [messages, busy, activeId]);
+
+  // Tab key cycles mentors
+  useEffect(() => {
+    const onKey = (e) => {
+      if (e.key === "Tab" && !e.shiftKey && document.activeElement?.tagName !== "TEXTAREA") {
+        e.preventDefault();
+        const i = MENTORS.findIndex(m => m.id === activeId);
+        setActiveId(MENTORS[(i + 1) % MENTORS.length].id);
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [activeId]);
+
+  const send = (text) => {
+    const content = (text ?? input).trim();
+    if (!content || busy) return;
+    const userMsg = { role: "user", content };
+    setConvos(c => ({ ...c, [activeId]: [...c[activeId], userMsg] }));
+    setInput("");
+    setBusy(true);
+    // simulate reply
+    const replies = CANNED[activeId];
+    const reply = replies[Math.floor(Math.random() * replies.length)];
+    const wait = 900 + Math.random() * 800;
+    setTimeout(() => {
+      setConvos(c => ({ ...c, [activeId]: [...c[activeId], { role: "assistant", content: reply }] }));
+      setBusy(false);
+    }, wait);
+  };
+
+  const newChat = () => {
+    setConvos(c => ({ ...c, [activeId]: [] }));
+    setInput("");
+  };
+
+  return (
+    <div className="h-full w-full flex" data-accent={activeId}>
+      {/* SIDEBAR */}
+      <Sidebar activeId={activeId} onSelect={setActiveId} onNewChat={newChat} />
+
+      {/* MAIN */}
+      <main className="flex-1 h-full relative flex flex-col overflow-hidden">
+        <div className="ambient" />
+        <div className="absolute inset-0 grid-bg opacity-[0.6] pointer-events-none" />
+
+        {/* Topbar */}
+        <div className="relative z-10 px-8 pt-5 pb-2 flex items-center justify-between border-b border-[var(--line)]/60">
+          <div className="flex items-center gap-3">
+            <Avatar mentor={mentor} size={28} />
+            <div className="leading-tight">
+              <div className="text-[13px] font-medium">{mentor.name}</div>
+              <div className="mono text-[10.5px] text-[var(--text-faint)] flex items-center gap-1.5">
+                <span className="inline-block w-1.5 h-1.5 rounded-full" style={{ background: mentor.accent, boxShadow: `0 0 8px ${mentor.accent}` }} />
+                online · {mentor.title}
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+        {/* Scroll area */}
+        <div ref={scrollRef} className="relative z-10 flex-1 overflow-y-auto">
+          {messages.length === 0 ? (
+            <Welcome key={mentor.id} mentor={mentor} onPick={(t) => send(t)} />
+          ) : (
+            <div className="max-w-[760px] mx-auto px-8 pt-8 pb-6">
+              {/* Conversation header */}
+              <div className="flex items-center gap-3 pb-6 mb-2 border-b border-[var(--line)]/60">
+                <Avatar mentor={mentor} size={40} active />
+                <div>
+                  <div className="serif text-[22px] leading-none text-white">{mentor.name}</div>
+                  <div className="mono text-[10.5px] uppercase tracking-[0.14em] text-[var(--text-faint)] mt-1">{mentor.role}</div>
+                </div>
+              </div>
+
+              {messages.map((m, i) => (
+                <MessageBubble key={i} msg={m} mentor={mentor} />
+              ))}
+              {busy && <Typing mentor={mentor} />}
+            </div>
+          )}
+        </div>
+
+        {/* Composer */}
+        <div className="relative">
+          {/* fade gradient above input */}
+          <div className="absolute inset-x-0 -top-10 h-10 bg-gradient-to-t from-[var(--bg)] to-transparent pointer-events-none z-10" />
+          <Composer mentor={mentor} value={input} setValue={setInput} onSend={() => send()} busy={busy} />
+        </div>
+      </main>
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(<App />);
+</script>
+</body>
+</html>
